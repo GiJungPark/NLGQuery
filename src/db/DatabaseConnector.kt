@@ -8,14 +8,16 @@ object DatabaseConnector {
     private var dataSource: HikariDataSource? = null
 
     fun initializeConnectionPool(url: String, user: String, pwd: String) {
-        val config = HikariConfig().apply {
-            jdbcUrl = url
-            username = user
-            password = pwd
-            driverClassName = MY_SQL_DRIVER
-            maximumPoolSize = 10
+        if (dataSource == null) {
+            val config = HikariConfig().apply {
+                jdbcUrl = url
+                username = user
+                password = pwd
+                driverClassName = MY_SQL_DRIVER
+                maximumPoolSize = 10
+            }
+            dataSource = HikariDataSource(config)
         }
-        dataSource = HikariDataSource(config)
     }
 
     fun getConnection(): Connection {
