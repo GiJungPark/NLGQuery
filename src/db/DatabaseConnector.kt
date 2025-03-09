@@ -1,35 +1,31 @@
 package db
 
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
 import java.sql.Connection
-import java.sql.DriverManager
-import java.sql.SQLException
 
 object DatabaseConnector {
-    private var connection: Connection? = null
+    private var dataSource: HikariDataSource? = null
 
-    fun getConnection(url: String, user: String, password: String): Connection {
-        if (connection == null) {
-            try {
-                Class.forName(MY_SQL_DRIVER)
-                connection = DriverManager.getConnection(url, user, password)
-            } catch (exception: ClassNotFoundException) {
-                throw ConnectorException(NOT_FOUND_MY_SQL_JDBC_DRIVER, exception)
-            } catch (sqlException: SQLException) {
-                throw ConnectorException(FAILED_CONNECT_DATABASE, sqlException)
-            }
+    fun initializeConnectionPool(url: String, user: String, pwd: String) {
+        val config = HikariConfig().apply {
+            jdbcUrl = url
+            username = user
+            password = pwd
+            driverClassName = MY_SQL_DRIVER
+            maximumPoolSize = 10
         }
-
-        return connection!!
+        dataSource = HikariDataSource(config)
     }
 
-    fun closeConnection() {
-        try {
-            connection?.close()
-        } catch (exception: SQLException) {
-        }
+    fun getConnection(): Connection {
+        return dataSource?.connection ?: throw ConnectorException(message = NOT_INITIALIZED_CONNECTION_POOL)
+    }
+
+    fun closeConnectionPool() {
+        dataSource?.close()
     }
 
     private const val MY_SQL_DRIVER = "com.mysql.cj.jdbc.Driver"
-    private const val NOT_FOUND_MY_SQL_JDBC_DRIVER = "MySQL JDBC 드라이버를 찾을 수 없습니다."
-    private const val FAILED_CONNECT_DATABASE = "데이터베이스 연결에 실패했습니다."
+    private const val NOT_INITIALIZED_CONNECTION_POOL = "Connection pool is not initialized."
 }
