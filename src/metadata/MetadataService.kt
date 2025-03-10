@@ -7,11 +7,11 @@ import db.QueryExecutor
 class MetadataService {
     private val objectMapper = ObjectMapper()
 
-    fun getMetadata(): List<TableMetadata> {
+    fun getMetadata(schema: String): List<TableMetadata> {
         val metadataCache = TableMetadataCache.cache
 
         if (metadataCache.isEmpty()) {
-            val metadata = loadMetadata()
+            val metadata = loadMetadata(schema)
             TableMetadataCache.loadMetadata(metadata)
 
             return metadata
@@ -20,7 +20,7 @@ class MetadataService {
         return metadataCache
     }
 
-    private fun loadMetadata(): List<TableMetadata> {
+    private fun loadMetadata(schema: String): List<TableMetadata> {
         val sql = "SELECT\n" +
                 "    TABLE_SCHEMA AS database_name,\n" +
                 "    TABLE_NAME AS table_name,\n" +
@@ -31,7 +31,7 @@ class MetadataService {
                 "  FROM\n" +
                 "    INFORMATION_SCHEMA.COLUMNS\n" +
                 "  WHERE\n" +
-                "    TABLE_SCHEMA = 'member'"
+                "    TABLE_SCHEMA = '$schema'"
         val result = QueryExecutor.query(sql)
 
         return objectMapper.readValue(result)
